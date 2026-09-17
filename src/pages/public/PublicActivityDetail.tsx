@@ -17,9 +17,12 @@ export const PublicActivityDetail: React.FC<PublicActivityDetailProps> = ({ acti
   const [error, setError] = useState<string | null>(null);
 
   // Registration state
+  const [registrationType, setRegistrationType] = useState<'VISITOR' | 'MEMBER'>('VISITOR');
   const [emailInput, setEmailInput] = useState<string>('');
+  const [fullNameInput, setFullNameInput] = useState<string>('');
+  const [memberIdInput, setMemberIdInput] = useState<string>('');
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
-  const [registrationSuccess, setRegistrationSuccess] = useState<any | null>(null);
+  const [registrationResult, setRegistrationResult] = useState<any | null>(null);
   const [registrationError, setRegistrationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,12 +48,22 @@ export const PublicActivityDetail: React.FC<PublicActivityDetailProps> = ({ acti
       setRegistrationError('Please provide a valid email address.');
       return;
     }
+    if (registrationType === 'MEMBER' && !memberIdInput.trim()) {
+      setRegistrationError('Member ID is required for MEMBER registration.');
+      return;
+    }
 
     setIsRegistering(true);
     setRegistrationError(null);
     try {
-      const res = await apiService.registerEvent(activityId, emailInput);
-      setRegistrationSuccess(res);
+      const payload = {
+        registrationType,
+        email: emailInput,
+        fullName: fullNameInput || emailInput.split('@')[0],
+        memberId: registrationType === 'MEMBER' ? memberIdInput.trim() : null,
+      };
+      const res = await apiService.registerActivity(activityId, payload);
+      setRegistrationResult(res);
     } catch (err: any) {
       setRegistrationError(err.message || 'Registration failed.');
     } finally {
@@ -218,32 +231,93 @@ export const PublicActivityDetail: React.FC<PublicActivityDetailProps> = ({ acti
                 </span>
               </div>
 
-              {registrationSuccess ? (
+              {registrationResult ? (
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-2">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
                     <div className="space-y-0.5">
-                      <h4 className="font-bold text-gray-900 dark:text-white text-sm">Registration Confirmed</h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-300">Your seat has been reserved.</p>
+                      <h4 className="font-bold text-gray-900 dark:text-white text-sm">
+                        {registrationResult.isExisting ? 'Existing Registration Found' : 'Registration Confirmed'}
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-300">
+                        {registrationResult.message || 'Your seat has been reserved.'}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Compact Ticket Credential Widget with overflow safety */}
-                  <div className="p-4 rounded-xl bg-[#0A0610] border border-purple-500/30 space-y-2 text-white overflow-hidden">
+                  {/* Compact Ticket Credential Widget with QR Payload */}
+                  <div className="p-4 rounded-xl bg-[#0A0610] border border-purple-500/30 space-y-3 text-white overflow-hidden">
                     <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-widest text-purple-400">
-                      <span>YOUR TICKET</span>
-                      <span>SECURED</span>
+                      <span>TICKET CREDENTIAL</span>
+                      <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300">{registrationResult.registration?.registrationType}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-bold text-sm tracking-wider break-all" style={{ overflowWrap: 'anywhere' }}>
-                        {registrationSuccess.ticketCode || 'TICK-SECURE-99'}
-                      </span>
-                      <span className="text-[10px] text-gray-400 shrink-0">INnovateAI Pass</span>
+                      <div>
+                        <div className="text-[10px] text-gray-400">Ticket Code</div>
+                        <span className="font-mono font-bold text-sm tracking-wider break-all text-purple-200">
+                          {registrationResult.ticket?.ticketCode || 'TICK-SECURE'}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-gray-400">Status</div>
+                        <span className="text-xs font-bold text-emerald-400">{registrationResult.registration?.status || 'CONFIRMED'}</span>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-purple-950/80 space-y-1">
+                      <div className="text-[10px] text-gray-400 uppercase tracking-wider font-mono">Secure QR Payload</div>
+                      <div className="p-2 rounded bg-black/60 font-mono text-[10px] text-purple-300 break-all select-all">
+                        {registrationResult.ticket?.qrPayload || 'INNOVATE-QR:CODE'}
+                      </div>
                     </div>
                   </div>
                 </div>
               ) : isRegistrationOpen ? (
                 <form onSubmit={handleRegister} className="space-y-4">
+                  {/* MEMBER XOR VISITOR Switcher */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                      Registration Type (MEMBER XOR VISITOR)
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setRegistrationType('VISITOR')}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                          registrationType === 'VISITOR'
+                            ? 'bg-[#8B2FC9] text-white border-[#8B2FC9]'
+                            : 'bg-gray-100 dark:bg-[#0A0610] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-purple-950'
+                        }`}
+                      >
+                        Visitor
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRegistrationType('MEMBER')}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                          registrationType === 'MEMBER'
+                            ? 'bg-[#8B2FC9] text-white border-[#8B2FC9]'
+                            : 'bg-gray-100 dark:bg-[#0A0610] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-purple-950'
+                        }`}
+                      >
+                        Member
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Alex Johnson"
+                      value={fullNameInput}
+                      onChange={(e) => setFullNameInput(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0610] border border-gray-200 dark:border-purple-900/50 text-gray-900 dark:text-white text-xs focus:outline-none focus:border-[#8B2FC9]"
+                    />
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
                       Email Address
@@ -257,6 +331,22 @@ export const PublicActivityDetail: React.FC<PublicActivityDetailProps> = ({ acti
                       className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0610] border border-gray-200 dark:border-purple-900/50 text-gray-900 dark:text-white text-xs focus:outline-none focus:border-[#8B2FC9]"
                     />
                   </div>
+
+                  {registrationType === 'MEMBER' && (
+                    <div className="space-y-1.5 animate-fadeIn">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                        Member ID
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="usr_member_123"
+                        value={memberIdInput}
+                        onChange={(e) => setMemberIdInput(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0A0610] border border-gray-200 dark:border-purple-900/50 text-gray-900 dark:text-white text-xs focus:outline-none focus:border-[#8B2FC9]"
+                      />
+                    </div>
+                  )}
 
                   {registrationError && (
                     <p className="text-xs text-red-500 font-medium break-words">{registrationError}</p>

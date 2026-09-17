@@ -8,11 +8,19 @@ import { Trophy, Award } from 'lucide-react';
 
 export const PublicLeaderboard: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [topN, setTopN] = useState<number>(10);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     apiService.getLeaderboard()
-      .then((data) => setLeaderboard(data))
+      .then((data: any) => {
+        if (Array.isArray(data)) {
+          setLeaderboard(data);
+        } else if (data && Array.isArray(data.leaderboard)) {
+          setLeaderboard(data.leaderboard);
+          if (data.topN) setTopN(data.topN);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -20,10 +28,10 @@ export const PublicLeaderboard: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 space-y-12">
       <div className="space-y-4 text-center">
-        <span className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400">Community Rankings</span>
+        <span className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400">Community Rankings (Configured Top-{topN})</span>
         <EchoHeading text="GLOBAL LEADERBOARD" size="lg" />
         <p className="text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
-          Leaderboard uses Dense Ranking. All members tied at cutoff ranks are included. Points are immutable and governed by Super Admin rules.
+          Leaderboard uses Dense Ranking (1, 1, 2, 3...). Configured Top-N is server-side controlled. All members tied at cutoff ranks are included.
         </p>
       </div>
 

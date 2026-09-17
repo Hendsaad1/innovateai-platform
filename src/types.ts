@@ -55,7 +55,7 @@ export interface Activity {
   location: string;
   capacity: number;
   enrolledCount: number;
-  status: 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  status: 'DRAFT' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 }
 
 export interface EventItem {
@@ -87,7 +87,7 @@ export interface Applicant {
   arabicAddress: string;
   linkedin?: string;
   motivation: string;
-  status: 'PENDING' | 'REVIEWING' | 'INTERVIEW_SCHEDULED' | 'ACCEPTED' | 'REJECTED';
+  status: 'SUBMITTED' | 'SCREENING' | 'SHORTLISTED' | 'INTERVIEW' | 'ACCEPTED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
 }
@@ -101,7 +101,7 @@ export interface TaskItem {
   pointsValue: number;
   pointRuleType: 'FIXED' | 'PERCENTAGE';
   dueDate: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  status: 'ASSIGNED' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 }
 
 export interface SubmissionItem {
@@ -127,7 +127,32 @@ export interface LeaderboardEntry {
   achievementsCount: number;
 }
 
+export interface PointRuleItem {
+  ruleId: string;
+  ruleName: string;
+  ruleType: 'NORMAL_COMPLETION' | 'LATE_COMPLETION' | 'MISSED_TASK_PENALTY' | 'ADJUSTMENT';
+  scope: string;
+  calculationMethod: 'FIXED' | 'PERCENTAGE';
+  configuredValue: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PointTransactionItem {
+  id: string;
+  memberId: string;
+  taskId?: string;
+  submissionId?: string;
+  transactionType: 'EARNED' | 'PENALTY' | 'ADJUSTMENT';
+  points: number;
+  description: string;
+  referenceId?: string;
+  createdAt: string;
+}
+
 export interface NotificationItem {
+
   id: string;
   userId: string;
   title: string;

@@ -27,7 +27,12 @@ export const PublicJoin: React.FC = () => {
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [successData, setSuccessData] = useState<{ referenceCode: string; message: string } | null>(null);
+  const [successData, setSuccessData] = useState<{
+    referenceCode: string;
+    message: string;
+    isExisting?: boolean;
+    status?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,6 +57,8 @@ export const PublicJoin: React.FC = () => {
       setSuccessData({
         referenceCode: res.referenceCode || 'INNOVATE-APP-' + Math.floor(1000 + Math.random() * 9000),
         message: res.message || 'Application submitted successfully.',
+        isExisting: !!res.isExisting,
+        status: res.status || 'SUBMITTED',
       });
     } catch (err: any) {
       setError(err.message || 'Failed to submit application.');
@@ -76,9 +83,13 @@ export const PublicJoin: React.FC = () => {
             <CheckCircle2 className="w-8 h-8" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-gray-900 dark:text-white">Application Submitted</h2>
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white">
+              {successData.isExisting ? 'APPLICATION ALREADY EXISTS' : 'APPLICATION SUBMITTED'}
+            </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Your application has been successfully received by our recruitment committee.
+              {successData.isExisting
+                ? 'You already have an active recruitment application.'
+                : 'Your application has been successfully received by our recruitment committee.'}
             </p>
           </div>
           <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 max-w-sm mx-auto space-y-1">
@@ -86,25 +97,57 @@ export const PublicJoin: React.FC = () => {
             <div className="text-xl font-mono font-black text-gray-900 dark:text-white">{successData.referenceCode}</div>
           </div>
 
+          <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/10 max-w-sm mx-auto flex items-center justify-center gap-2">
+            <span className="text-xs font-semibold text-gray-500">Current Status:</span>
+            <Badge variant={successData.status === 'ACCEPTED' ? 'emerald' : successData.status === 'REJECTED' ? 'danger' : 'purple'}>
+              {successData.status || 'SUBMITTED'}
+            </Badge>
+          </div>
+
+          {successData.status === 'ACCEPTED' && (
+            <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 max-w-md mx-auto space-y-3">
+              <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400">APPLICATION ACCEPTED</h4>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
+                Your application has been accepted. Next step: Activate your INnovateAI member account.
+              </p>
+              <Button variant="primary" size="sm" onClick={() => window.location.href = '/login'}>
+                Activate Account
+              </Button>
+            </div>
+          )}
+
+          {successData.status === 'REJECTED' && (
+            <div className="p-5 rounded-xl bg-red-500/10 border border-red-500/20 max-w-md mx-auto space-y-2">
+              <h4 className="text-sm font-bold text-red-600 dark:text-red-400">APPLICATION STATUS: REJECTED</h4>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
+                Thank you for your interest in INnovateAI. Unfortunately, your application was not selected in this recruitment cycle.
+              </p>
+            </div>
+          )}
+
           <div className="pt-4 space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">Application Status Journey</h4>
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-              <span className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-500 font-bold flex items-center gap-1">✓ Submitted</span>
+              <span className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 ${['SUBMITTED', 'SCREENING', 'SHORTLISTED', 'INTERVIEW', 'ACCEPTED', 'REJECTED'].includes(successData.status || 'SUBMITTED') ? 'bg-emerald-500/20 text-emerald-500' : 'bg-gray-100 text-gray-500'}`}>
+                ✓ Submitted
+              </span>
               <span className="text-gray-400">→</span>
-              <span className="px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 font-medium">Screening</span>
+              <span className={`px-3 py-1.5 rounded-lg font-medium ${successData.status === 'SCREENING' || ['SHORTLISTED', 'INTERVIEW', 'ACCEPTED'].includes(successData.status || '') ? 'bg-purple-500/20 text-purple-400 font-bold' : 'bg-gray-100 dark:bg-purple-950/40 text-gray-500'}`}>
+                Screening
+              </span>
               <span className="text-gray-400">→</span>
-              <span className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-purple-950/40 text-gray-500">Shortlisted</span>
+              <span className={`px-3 py-1.5 rounded-lg font-medium ${successData.status === 'SHORTLISTED' || ['INTERVIEW', 'ACCEPTED'].includes(successData.status || '') ? 'bg-purple-500/20 text-purple-400 font-bold' : 'bg-gray-100 dark:bg-purple-950/40 text-gray-500'}`}>
+                Shortlisted
+              </span>
               <span className="text-gray-400">→</span>
-              <span className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-purple-950/40 text-gray-500">Interview</span>
+              <span className={`px-3 py-1.5 rounded-lg font-medium ${successData.status === 'INTERVIEW' || successData.status === 'ACCEPTED' ? 'bg-purple-500/20 text-purple-400 font-bold' : 'bg-gray-100 dark:bg-purple-950/40 text-gray-500'}`}>
+                Interview
+              </span>
               <span className="text-gray-400">→</span>
-              <span className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-purple-950/40 text-gray-500">Decision</span>
+              <span className={`px-3 py-1.5 rounded-lg font-medium ${successData.status === 'ACCEPTED' ? 'bg-emerald-500/20 text-emerald-400 font-bold' : successData.status === 'REJECTED' ? 'bg-red-500/20 text-red-400 font-bold' : 'bg-gray-100 dark:bg-purple-950/40 text-gray-500'}`}>
+                Decision
+              </span>
             </div>
-          </div>
-
-          <div className="pt-4">
-            <Button variant="outline" size="sm" onClick={() => setSuccessData(null)}>
-              Submit Another or Reset
-            </Button>
           </div>
         </Card>
       ) : (
