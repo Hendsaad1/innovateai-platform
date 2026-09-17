@@ -1,0 +1,6 @@
+{
+  "name": "INnovateAI Community Platform",
+  "description": "University Artificial Intelligence and technology community platform connecting students, teams, activities, recruitment, and events.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
